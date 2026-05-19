@@ -9,12 +9,34 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary          = OliveGreen80,
+    onPrimary        = Color(0xFF1A2710),
+    primaryContainer = OliveGreen40,
+    onPrimaryContainer = OliveGreen80,
+
+    secondary          = OliveGreenGrey80,
+    onSecondary        = Color(0xFF243317),
+    secondaryContainer = OliveGreenGrey40,
+    onSecondaryContainer = OliveGreenGrey80,
+
+    tertiary          = MossGreen80,
+    onTertiary        = Color(0xFF2E4010),
+    tertiaryContainer = MossGreen40,
+    onTertiaryContainer = MossGreen80,
+
+    background  = DarkBackground,
+    onBackground = OnDarkPrimary,
+
+    surface         = DarkSurface,
+    onSurface       = OnDarkPrimary,
+    surfaceVariant  = DarkSurfaceVariant,
+    onSurfaceVariant = OnDarkSecondary,
+
+    outline = OnDarkDisabled
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -40,15 +62,17 @@ fun WeatherSnapTheme(
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
+//    val colorScheme = when {
+//        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+//            val context = LocalContext.current
+//            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+//        }
+//
+//        darkTheme -> DarkColorScheme
+//        else -> LightColorScheme
+//    }
 
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
+    val colorScheme = DarkColorScheme
 
     MaterialTheme(
         colorScheme = colorScheme,
