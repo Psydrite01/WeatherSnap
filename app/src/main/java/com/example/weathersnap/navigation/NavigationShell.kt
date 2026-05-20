@@ -18,7 +18,11 @@ fun NavigationShell(){
         startDestination = WeatherScreenRoute
     ){
         composable<WeatherScreenRoute> {
-            WeatherScreen()
+            WeatherScreen(
+                navigateToCreateReport = {
+                    NavController.navigate(CreateReportScreenRoute)
+                }
+            )
         }
         composable<CreateReportScreenRoute> {
             CreateReportScreen()
