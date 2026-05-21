@@ -4,7 +4,7 @@
 
 WeatherSnap is an Android application that combines real-time weather data with photographic evidence to create comprehensive weather reports. Users can search for any location, capture current conditions with their device camera, add contextual notes, and save reports for future reference.
 
-![WeatherSnap Screenshots](screenshots/weather_snap_demo.gif) <!-- Add actual screenshots if available -->
+Demo video: https://drive.google.com/file/d/1WlF2BJIgA1w9jTbhxyw0O0nZ-KRBKvRR/view?usp=sharing
 
 ## ✨ Features
 
