@@ -5,7 +5,10 @@ import androidx.room.Room
 import com.example.weathersnap.data.GeocodingApiService
 import com.example.weathersnap.data.WeatherApiService
 import com.example.weathersnap.data.local.CityDao
+import com.example.weathersnap.data.local.ReportDao
 import com.example.weathersnap.data.local.WeatherDatabase
+import com.example.weathersnap.data.repository.ReportRepository
+import com.example.weathersnap.data.repository.ReportRepositoryImpl
 import com.example.weathersnap.data.repository.WeatherRepository
 import com.example.weathersnap.data.repository.WeatherRepositoryImpl
 import com.google.gson.Gson
@@ -86,6 +89,10 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideGson(): Gson = Gson()
+
+    @Provides
+    @Singleton
+    fun provideReportDao(db: WeatherDatabase): ReportDao = db.reportDao()
 }
 
 @Module
@@ -97,4 +104,10 @@ abstract class RepositoryModule {
     abstract fun bindWeatherRepository(
         impl: WeatherRepositoryImpl
     ): WeatherRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindReportRepository(
+        impl: ReportRepositoryImpl
+    ): ReportRepository
 }

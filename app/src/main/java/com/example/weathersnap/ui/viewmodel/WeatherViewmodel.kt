@@ -2,6 +2,8 @@ package com.example.weathersnap.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.weathersnap.data.local.ReportEntity
+import com.example.weathersnap.data.repository.ReportRepository
 import com.example.weathersnap.data.repository.WeatherRepository
 import com.example.weathersnap.domain.CityResult
 import com.example.weathersnap.domain.CurrentConditions
@@ -30,6 +32,13 @@ sealed interface WeatherUiState {
     data class Error(val message: String) : WeatherUiState
 }
 
+sealed interface SaveReportState {
+    data object Idle    : SaveReportState
+    data object Saving  : SaveReportState
+    data object Saved   : SaveReportState
+    data class  Error(val message: String) : SaveReportState
+}
+
 data class SearchUiState(
     val query: String = "",
     val suggestions: List<CityResult> = emptyList(),
@@ -41,7 +50,8 @@ data class SearchUiState(
 
 @HiltViewModel
 class WeatherViewModel @Inject constructor(
-    private val repository: WeatherRepository
+    private val repository: WeatherRepository,
+    private val reportRepository: ReportRepository
 ) : ViewModel() {
 
     private val _weatherState = MutableStateFlow<WeatherUiState>(WeatherUiState.Idle)
@@ -52,6 +62,10 @@ class WeatherViewModel @Inject constructor(
 
     private val _capturedImage = MutableStateFlow<CompressedImageResult?>(null)
     val capturedImage: StateFlow<CompressedImageResult?> = _capturedImage.asStateFlow()
+
+    private val _saveReportState = MutableStateFlow<SaveReportState>(SaveReportState.Idle)
+    val saveReportState: StateFlow<SaveReportState> = _saveReportState.asStateFlow()
+
 
     private val _selectedWeather = MutableStateFlow(
         WeatherInfo(
@@ -177,4 +191,35 @@ class WeatherViewModel @Inject constructor(
     fun setCapturedImage(result: CompressedImageResult?) {
         _capturedImage.value = result
     }
+
+    fun saveReport(notes: String) {
+        val weather = _selectedWeather.value
+        val image   = _capturedImage.value
+
+        viewModelScope.launch {
+            _saveReportState.value = SaveReportState.Saving
+            try {
+                val entity = ReportEntity(
+                    cityName = weather.cityName,
+                    condition = weather.current.description,
+                    temperature = weather.current.temperature,
+                    humidity = weather.current.humidity,
+                    windSpeed = weather.current.windSpeed,
+                    feelsLike = weather.current.feelsLike,
+                    photoUriString = image?.uri?.toString(),
+                    originalSizeBytes = image?.originalSizeBytes ?: 0L,
+                    compressedSizeBytes = image?.compressedSizeBytes ?: 0L,
+                    notes = notes,
+                    savedAt = System.currentTimeMillis()
+                )
+                reportRepository.saveReport(entity)
+                _saveReportState.value = SaveReportState.Saved
+            } catch (e: Exception) {
+                _saveReportState.value = SaveReportState.Error(e.localizedMessage ?: "Save failed")
+            }
+        }
+    }
+
+    fun resetSaveState() { _saveReportState.value = SaveReportState.Idle }
+
 }

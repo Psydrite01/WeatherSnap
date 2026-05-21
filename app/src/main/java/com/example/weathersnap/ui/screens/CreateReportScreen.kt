@@ -44,6 +44,7 @@ import com.example.weathersnap.ui.theme.PressureText
 import com.example.weathersnap.ui.theme.TopGradientEnd
 import com.example.weathersnap.ui.theme.TopGradientStart
 import com.example.weathersnap.ui.theme.WindText
+import com.example.weathersnap.ui.viewmodel.SaveReportState
 import com.example.weathersnap.ui.viewmodel.WeatherViewModel
 import com.example.weathersnap.util.CompressedImageResult
 import com.example.weathersnap.util.ImageUtils
@@ -63,6 +64,7 @@ private val FeelsLikeBackground = Color(0xff403a2a)
 fun CreateReportScreen(
     onBack: () -> Unit,
     onOpenCamera: () -> Unit,
+    onReportSaved: () -> Unit,
     viewModel: WeatherViewModel
 ) {
     var notes by remember { mutableStateOf("") }
@@ -71,10 +73,26 @@ fun CreateReportScreen(
 
     val imageResult by viewModel.capturedImage.collectAsState()
 
+    val saveState    by viewModel.saveReportState.collectAsState()
+
+    // Navigate away when save succeeds
+    LaunchedEffect(saveState) {
+        if (saveState is SaveReportState.Saved) {
+            viewModel.resetSaveState()
+            viewModel.setCapturedImage(null)   // clear photo for next report
+            onReportSaved()
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(
+                brush = Brush.linearGradient(colors = listOf(
+                    MaterialTheme.colorScheme.tertiary,
+                    MaterialTheme.colorScheme.background
+                ))
+            )
     ) {
         Column(
             modifier = Modifier
@@ -106,22 +124,44 @@ fun CreateReportScreen(
             )
 
             // ── Save Report button ────────────────────────────────────────────
+            val isSaving = saveState is SaveReportState.Saving
+
             Button(
-                onClick = { /* TODO */ },
+                onClick  = { if (!isSaving) viewModel.saveReport(notes) },
+                enabled  = !isSaving,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 12.dp)
                     .height(52.dp),
                 shape  = RoundedCornerShape(28.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = ButtonFill_lighttype,
-                    contentColor   = Color(0xFF1A2710)
+                    containerColor         = ButtonFill_lighttype,
+                    contentColor           = Color(0xFF1A2710),
+                    disabledContainerColor = ButtonFill_lighttype.copy(alpha = 0.6f)
                 )
             ) {
+                if (isSaving) {
+                    CircularProgressIndicator(
+                        modifier    = Modifier.size(20.dp),
+                        color       = Color(0xFF1A2710),
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(
+                        text       = "Save Report",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize   = 15.sp
+                    )
+                }
+            }
+
+            // Show error snackbar if save fails
+            if (saveState is SaveReportState.Error) {
                 Text(
-                    text       = "Save Report",
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize   = 15.sp
+                    text     = (saveState as SaveReportState.Error).message,
+                    color    = MaterialTheme.colorScheme.error,
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(horizontal = 16.dp)
                 )
             }
 

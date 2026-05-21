@@ -9,11 +9,13 @@ import com.example.weathersnap.ui.screens.CameraScreen
 import com.example.weathersnap.ui.screens.CreateReportScreen
 import com.example.weathersnap.ui.screens.SavedReportsScreen
 import com.example.weathersnap.ui.screens.WeatherScreen
+import com.example.weathersnap.ui.viewmodel.ReportsViewModel
 import com.example.weathersnap.ui.viewmodel.WeatherViewModel
 
 @Composable
 fun NavigationShell(
-    WeatherViewmodel: WeatherViewModel = hiltViewModel()
+    WeatherViewmodel: WeatherViewModel = hiltViewModel(),
+    ReportsViewmodel: ReportsViewModel = hiltViewModel()
 ){
     val NavController = rememberNavController()
 
@@ -26,7 +28,10 @@ fun NavigationShell(
                 navigateToCreateReport = {
                     NavController.navigate(CreateReportScreenRoute)
                 },
-                viewModel = WeatherViewmodel
+                viewModel = WeatherViewmodel,
+                navigateToSavedReports = {
+                    NavController.navigate(SavedReportsScreenRoute)
+                }
             )
         }
         composable<CreateReportScreenRoute> {
@@ -37,6 +42,9 @@ fun NavigationShell(
                 },
                 onBack = {
                     NavController.popBackStack()
+                },
+                onReportSaved = {
+                    NavController.navigate(SavedReportsScreenRoute)
                 }
             )
         }
@@ -52,7 +60,12 @@ fun NavigationShell(
             )
         }
         composable<SavedReportsScreenRoute> {
-            SavedReportsScreen()
+            SavedReportsScreen(
+                onBack = {
+                    NavController.popBackStack()
+                },
+                viewModel = ReportsViewmodel
+            )
         }
     }
 }

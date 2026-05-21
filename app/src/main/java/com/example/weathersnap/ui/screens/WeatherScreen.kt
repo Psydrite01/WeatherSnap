@@ -1,6 +1,5 @@
 package com.example.weathersnap.ui.screens
 
-import android.R
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -64,6 +63,7 @@ private val FeelsLikeBackground = Color(0xff403a2a)
 fun WeatherScreen(
     viewModel: WeatherViewModel,
     navigateToCreateReport: () -> Unit,
+    navigateToSavedReports: () -> Unit
 ) {
     val weatherState by viewModel.weatherState.collectAsState()
     val searchState  by viewModel.searchState.collectAsState()
@@ -71,7 +71,12 @@ fun WeatherScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(
+                brush = Brush.linearGradient(colors = listOf(
+                    MaterialTheme.colorScheme.tertiary,
+                    MaterialTheme.colorScheme.background
+                ))
+            )
     ) {
         Column(
             modifier = Modifier
@@ -80,14 +85,16 @@ fun WeatherScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // ── Header ────────────────────────────────────────────────────
-            WeatherSnapHeader()
+            WeatherSnapHeader(
+                navigateToSavedReports
+            )
 
             // ── City search card ──────────────────────────────────────────
             CitySearchCard(
                 modifier     = Modifier.padding(horizontal = 12.dp),
                 searchState  = searchState,
                 onQueryChange    = viewModel::onSearchQueryChange,
-                onSearchClick    = { /* debounce already handles it */ },
+                onSearchClick    = {viewModel.retry()},
                 onCitySelected   = viewModel::onCitySelected,
                 onDismissDropdown = viewModel::dismissDropdown,
                 onClearSearch    = viewModel::clearSearch
@@ -111,7 +118,9 @@ fun WeatherScreen(
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
-fun WeatherSnapHeader() {
+fun WeatherSnapHeader(
+    navigateToSavedReports: () -> Unit
+) {
     Spacer(Modifier.height(30.dp))
     Box(
         modifier = Modifier
@@ -153,7 +162,9 @@ fun WeatherSnapHeader() {
                 }
                 Spacer(Modifier.weight(1f))
                 Button(
-                    onClick = { /* TODO */ },
+                    onClick = {
+                        navigateToSavedReports()
+                    },
                     modifier = Modifier
                         .padding(top = 16.dp, start = 8.dp, end = 16.dp, bottom = 16.dp),
                     shape  = RoundedCornerShape(8.dp),
