@@ -1,5 +1,6 @@
 package com.example.weathersnap.ui.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.weathersnap.data.local.ReportEntity
@@ -46,6 +47,8 @@ data class SearchUiState(
     val isDropdownVisible: Boolean = false
 )
 
+
+
 // ── ViewModel ─────────────────────────────────
 
 @HiltViewModel
@@ -65,6 +68,9 @@ class WeatherViewModel @Inject constructor(
 
     private val _saveReportState = MutableStateFlow<SaveReportState>(SaveReportState.Idle)
     val saveReportState: StateFlow<SaveReportState> = _saveReportState.asStateFlow()
+
+    private val _savedNotes = MutableStateFlow<String>("")
+    val savedNotes: StateFlow<String> = _savedNotes.asStateFlow()
 
 
     private val _selectedWeather = MutableStateFlow(
@@ -110,10 +116,12 @@ class WeatherViewModel @Inject constructor(
 
     private fun fetchCitySuggestions(query: String) {
         viewModelScope.launch {
+            Log.d("WeatherViewModel", "fetchCitySuggestions: query=$query")
             _searchState.update { it.copy(isSearching = true) }
 
             repository.searchCity(query).fold(
                 onSuccess = { cities ->
+                    Log.d("WeatherViewModel", "fetchCitySuggestions: Success, ${cities.size} found")
                     _searchState.update {
                         it.copy(
                             suggestions = cities,
@@ -123,6 +131,7 @@ class WeatherViewModel @Inject constructor(
                     }
                 },
                 onFailure = { error ->
+                    Log.e("WeatherViewModel", "fetchCitySuggestions: Error", error)
                     _searchState.update {
                         it.copy(
                             suggestions = emptyList(),
@@ -149,6 +158,7 @@ class WeatherViewModel @Inject constructor(
 
     private fun loadWeather(city: CityResult) {
         viewModelScope.launch {
+            Log.d("WeatherViewModel", "loadWeather: ${city.name}")
             _weatherState.value = WeatherUiState.Loading
 
             repository.getWeather(
@@ -157,9 +167,11 @@ class WeatherViewModel @Inject constructor(
                 cityName = "${city.name}, ${city.country}"
             ).fold(
                 onSuccess = { info ->
+                    Log.d("WeatherViewModel", "loadWeather: Success")
                     _weatherState.value = WeatherUiState.Success(info)
                 },
                 onFailure = { error ->
+                    Log.e("WeatherViewModel", "loadWeather: Error", error)
                     _weatherState.value = WeatherUiState.Error(
                         error.localizedMessage ?: "Failed to fetch weather"
                     )
@@ -195,6 +207,7 @@ class WeatherViewModel @Inject constructor(
     fun saveReport(notes: String) {
         val weather = _selectedWeather.value
         val image   = _capturedImage.value
+        Log.d("WeatherViewModel", "saveReport: city=${weather.cityName}")
 
         viewModelScope.launch {
             _saveReportState.value = SaveReportState.Saving
@@ -213,11 +226,18 @@ class WeatherViewModel @Inject constructor(
                     savedAt = System.currentTimeMillis()
                 )
                 reportRepository.saveReport(entity)
+                Log.d("WeatherViewModel", "saveReport: Success")
                 _saveReportState.value = SaveReportState.Saved
+                setSavedNotes()
             } catch (e: Exception) {
+                Log.e("WeatherViewModel", "saveReport: Error", e)
                 _saveReportState.value = SaveReportState.Error(e.localizedMessage ?: "Save failed")
             }
         }
+    }
+
+    fun setSavedNotes(value: String=""){
+        _savedNotes.value = value
     }
 
     fun resetSaveState() { _saveReportState.value = SaveReportState.Idle }

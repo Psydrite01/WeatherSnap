@@ -74,6 +74,13 @@ fun CreateReportScreen(
     val imageResult by viewModel.capturedImage.collectAsState()
 
     val saveState    by viewModel.saveReportState.collectAsState()
+    val savedNotes by viewModel.savedNotes.collectAsState()
+
+    LaunchedEffect(savedNotes) {
+        if (notes==""){
+            notes = savedNotes
+        }
+    }
 
     // Navigate away when save succeeds
     LaunchedEffect(saveState) {
@@ -119,7 +126,10 @@ fun CreateReportScreen(
             // ── Field notes card ──────────────────────────────────────────────
             FieldNotesCard(
                 notes    = notes,
-                onNotesChange = { notes = it },
+                onNotesChange = {
+                    notes = it
+                    viewModel.setSavedNotes(it)
+                                },
                 modifier = Modifier.padding(horizontal = 12.dp)
             )
 

@@ -1,5 +1,6 @@
 package com.example.weathersnap.data.repository
 
+import android.util.Log
 import com.example.weathersnap.data.GeocodingApiService
 import com.example.weathersnap.data.WeatherApiService
 import com.example.weathersnap.data.local.CachedCityEntity
@@ -33,18 +34,22 @@ class WeatherRepositoryImpl @Inject constructor(
 
     override suspend fun searchCity(query: String): Result<List<CityResult>> {
         val key = query.trim().lowercase()
+        Log.d("WeatherRepository", "searchCity: query=$query")
 
         // 1. Check cache
         val cached = cityDao.getByQuery(key)
         if (cached != null && System.currentTimeMillis() - cached.cachedAt < CACHE_TTL_MS) {
+            Log.d("WeatherRepository", "searchCity: Cache HIT for $key")
             val type = object : TypeToken<List<CityResult>>() {}.type
             return Result.success(gson.fromJson(cached.citiesJson, type))
         }
 
+        Log.d("WeatherRepository", "searchCity: Cache MISS for $key, hitting network")
         // 2. Cache miss → hit network
         return try {
             val response = geocodingApi.searchCity(name = query)
             val cities = response.results?.map { it.toDomain() } ?: emptyList()
+            Log.d("WeatherRepository", "searchCity: Network success, found ${cities.size} cities")
 
             // 3. Store result
             cityDao.insert(
@@ -57,6 +62,7 @@ class WeatherRepositoryImpl @Inject constructor(
 
             Result.success(cities)
         } catch (e: Exception) {
+            Log.e("WeatherRepository", "searchCity: Network/Cache error", e)
             Result.failure(e)
         }
     }
@@ -66,13 +72,17 @@ class WeatherRepositoryImpl @Inject constructor(
         longitude: Double,
         cityName: String
     ): Result<WeatherInfo> {
+        Log.d("WeatherRepository", "getWeather: city=$cityName ($latitude, $longitude)")
         return try {
             val response = weatherApi.getWeather(
                 latitude = latitude,
                 longitude = longitude
             )
-            Result.success(response.toDomain(cityName))
+            val info = response.toDomain(cityName)
+            Log.d("WeatherRepository", "getWeather: Success for $cityName")
+            Result.success(info)
         } catch (e: Exception) {
+            Log.e("WeatherRepository", "getWeather: Error for $cityName", e)
             Result.failure(e)
         }
     }
