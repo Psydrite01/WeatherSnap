@@ -53,6 +53,20 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
 
+    // CameraX
+    val cameraxVersion = "1.3.4"
+    implementation("androidx.camera:camera-core:$cameraxVersion")
+    implementation("androidx.camera:camera-camera2:$cameraxVersion")
+    implementation("androidx.camera:camera-lifecycle:$cameraxVersion")
+    implementation("androidx.camera:camera-view:$cameraxVersion")
+    implementation("androidx.exifinterface:exifinterface:1.3.7")
+
+    // Accompanist Permissions (for runtime camera permission handling)
+    implementation("com.google.accompanist:accompanist-permissions:0.34.0")
+
+    // coil
+    implementation("io.coil-kt:coil-compose:2.7.0")
+
     implementation("androidx.compose.material:material-icons-extended")
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)

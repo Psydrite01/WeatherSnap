@@ -4,7 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.weathersnap.data.repository.WeatherRepository
 import com.example.weathersnap.domain.CityResult
+import com.example.weathersnap.domain.CurrentConditions
+import com.example.weathersnap.domain.WeatherIcon
 import com.example.weathersnap.domain.WeatherInfo
+import com.example.weathersnap.util.CompressedImageResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.FlowPreview
@@ -46,6 +49,21 @@ class WeatherViewModel @Inject constructor(
 
     private val _searchState = MutableStateFlow(SearchUiState())
     val searchState: StateFlow<SearchUiState> = _searchState.asStateFlow()
+
+    private val _capturedImage = MutableStateFlow<CompressedImageResult?>(null)
+    val capturedImage: StateFlow<CompressedImageResult?> = _capturedImage.asStateFlow()
+
+    private val _selectedWeather = MutableStateFlow(
+        WeatherInfo(
+            cityName = "",
+            latitude = 0.0,
+            longitude = 0.0,
+            timezone = "",
+            current = CurrentConditions(0.0, 0.0, 0, 0.0, 0.0, 0, true, "", WeatherIcon.CLEAR_DAY),
+            dailyForecasts = emptyList(),
+            hourlyForecasts = emptyList()
+        ))
+    val selectedWeather: StateFlow<WeatherInfo> = _selectedWeather.asStateFlow()
 
     // Internal flow to debounce search input
     private val _searchQuery = MutableStateFlow("")
@@ -150,5 +168,13 @@ class WeatherViewModel @Inject constructor(
         if (currentQuery.isNotBlank()) {
             fetchCitySuggestions(currentQuery)
         }
+    }
+
+    fun setSelectedWeather(info: WeatherInfo){
+        _selectedWeather.value = info
+    }
+
+    fun setCapturedImage(result: CompressedImageResult?) {
+        _capturedImage.value = result
     }
 }

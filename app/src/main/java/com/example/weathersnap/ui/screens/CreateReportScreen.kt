@@ -9,6 +9,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -18,15 +20,22 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.AsyncImage
+import com.example.weathersnap.domain.WeatherInfo
 import com.example.weathersnap.ui.theme.DarkBackground
 import com.example.weathersnap.ui.theme.DarkSurface
 import com.example.weathersnap.ui.theme.DarkSurfaceVariant
 import com.example.weathersnap.ui.theme.HumidityText
+import com.example.weathersnap.ui.theme.OliveGreen40
 import com.example.weathersnap.ui.theme.OliveGreen80
 import com.example.weathersnap.ui.theme.OnDarkDisabled
 import com.example.weathersnap.ui.theme.OnDarkPrimary
@@ -35,23 +44,37 @@ import com.example.weathersnap.ui.theme.PressureText
 import com.example.weathersnap.ui.theme.TopGradientEnd
 import com.example.weathersnap.ui.theme.TopGradientStart
 import com.example.weathersnap.ui.theme.WindText
+import com.example.weathersnap.ui.viewmodel.WeatherViewModel
+import com.example.weathersnap.util.CompressedImageResult
+import com.example.weathersnap.util.ImageUtils
+import kotlin.math.roundToInt
 
 
-private val ButtonFill = Color(0xFFCCDE6E)
+private val ButtonFill_lighttype = Color(0xFFCCDE6E)
+private val ButtonFill_darktype = Color(0xFF2d3400)
 private val PhotoGradientTopLeft     = Color(0xFF6B8C3A)
 private val PhotoGradientBottomRight = Color(0xFF2A3D10)
 
+private val HumidityBackground = Color(0xff353e35)
+private val WindBackground = Color(0xff353c3c)
+private val FeelsLikeBackground = Color(0xff403a2a)
 
 @Composable
 fun CreateReportScreen(
-    onBack: () -> Unit = {}
+    onBack: () -> Unit,
+    onOpenCamera: () -> Unit,
+    viewModel: WeatherViewModel
 ) {
     var notes by remember { mutableStateOf("") }
+    val info by viewModel.selectedWeather.collectAsState()
+    val weatherinfo = info
+
+    val imageResult by viewModel.capturedImage.collectAsState()
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(DarkBackground)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier
@@ -64,12 +87,15 @@ fun CreateReportScreen(
 
             // ── Weather summary card ──────────────────────────────────────────
             WeatherSummaryCard(
-                modifier = Modifier.padding(horizontal = 12.dp)
+                modifier = Modifier.padding(horizontal = 12.dp),
+                info = weatherinfo
             )
 
             // ── Camera card (photo preview + capture button) ──────────────────
             CameraCard(
-                modifier = Modifier.padding(horizontal = 12.dp)
+                modifier      = Modifier.padding(horizontal = 12.dp),
+                imageResult   = imageResult,
+                onOpenCamera  = onOpenCamera
             )
 
             // ── Field notes card ──────────────────────────────────────────────
@@ -88,7 +114,7 @@ fun CreateReportScreen(
                     .height(52.dp),
                 shape  = RoundedCornerShape(28.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = ButtonFill,
+                    containerColor = ButtonFill_lighttype,
                     contentColor   = Color(0xFF1A2710)
                 )
             ) {
@@ -99,7 +125,7 @@ fun CreateReportScreen(
                 )
             }
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(120.dp))
         }
     }
 }
@@ -110,48 +136,70 @@ fun CreateReportScreen(
 
 @Composable
 fun CreateReportHeader(onBack: () -> Unit) {
+    Spacer(Modifier.height(30.dp))
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(
-                brush = Brush.linearGradient(
-                    colors = listOf(TopGradientStart, TopGradientEnd),
-                    start  = Offset(0f, 0f),
-                    end    = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
-                )
-            )
-            .padding(horizontal = 20.dp, vertical = 22.dp)
     ) {
-        Column(modifier = Modifier.align(Alignment.CenterStart)) {
-            Text(
-                text       = "Create Report",
-                style      = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color      = OnDarkPrimary
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp, bottom = 8.dp, start = 12.dp, end = 12.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.Transparent,
+                contentColor = MaterialTheme.colorScheme.onSurface
             )
-            Text(
-                text  = "Capture, compress, annotate",
-                style = MaterialTheme.typography.bodySmall,
-                color = OnDarkPrimary.copy(alpha = 0.78f)
-            )
+        ) {
+            Box(
+                modifier = Modifier.background(
+                    brush = Brush.horizontalGradient(
+                        colors = listOf(
+                            Color(0xffc1cd7e),
+                            Color(0xffa2d0c3)
+                        )
+                    )
+                )
+            ) {
+                Row() {
+                    Column(modifier = Modifier
+                        .padding(16.dp)) {
+                        Text(
+                            text       = "Create Report",
+                            fontSize   = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            color      = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text  = "Capture, compress, annotate",
+                            fontSize   = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    Spacer(Modifier.weight(1f))
+                    Button(
+                        onClick = {
+                            onBack()
+                        },
+                        modifier = Modifier
+                            .padding(top = 16.dp, start = 8.dp, end = 16.dp, bottom = 16.dp),
+                        shape  = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = ButtonFill_darktype,
+                            contentColor   = MaterialTheme.colorScheme.onSurface
+                        ),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        Text(
+                            text       = "Back",
+                            fontWeight = FontWeight.SemiBold,
+                            color = ButtonFill_lighttype,
+                            fontSize   = 13.sp
+                        )
+                    }
+                }
+            }
         }
 
-        Button(
-            onClick = onBack,
-            modifier = Modifier.align(Alignment.CenterEnd),
-            shape  = RoundedCornerShape(24.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF1A2A0A).copy(alpha = 0.7f),
-                contentColor   = OnDarkPrimary
-            ),
-            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp)
-        ) {
-            Text(
-                text       = "Back",
-                fontWeight = FontWeight.SemiBold,
-                fontSize   = 13.sp
-            )
-        }
     }
 }
 
@@ -160,87 +208,94 @@ fun CreateReportHeader(onBack: () -> Unit) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
-fun WeatherSummaryCard(modifier: Modifier = Modifier) {
-    Surface(
-        modifier       = modifier.fillMaxWidth(),
-        shape          = RoundedCornerShape(14.dp),
-        color          = DarkSurface,
+fun WeatherSummaryCard(
+    info: WeatherInfo,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 12.dp, vertical = 3.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
 
-            // City + temperature
+            // ── City + temperature ─────────────────────────────────────────
             Row(
                 modifier              = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment     = Alignment.Top
             ) {
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text       = "Placeholder City",
+                        text       = info.cityName,
                         style      = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color      = OnDarkPrimary
+                        color      = OnDarkPrimary,
+                        maxLines   = 1,
+                        overflow   = TextOverflow.Ellipsis
                     )
-                    Text(
-                        text  = "Partly cloudy",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = OnDarkSecondary
-                    )
+                    Row(
+                        verticalAlignment      = Alignment.CenterVertically,
+                        horizontalArrangement  = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(text = info.current.iconRes.emoji, fontSize = 14.sp)
+                        Text(
+                            text  = info.current.description,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = OnDarkSecondary
+                        )
+                    }
                 }
 
-                Text(
-                    text       = "00°C",
-                    fontSize   = 26.sp,
-                    fontWeight = FontWeight.Bold,
-                    color      = OnDarkPrimary
-                )
+                Spacer(Modifier.width(8.dp))
+
+                // Temperature badge
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(OliveGreen40)
+                        .padding(horizontal = 14.dp, vertical = 10.dp)
+                ) {
+                    Text(
+                        text       = "${info.current.temperature.roundToInt()}°C",
+                        fontSize   = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        color      = ButtonFill_lighttype
+                    )
+                }
             }
 
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(16.dp))
 
-            // Stat chips
+            // ── Stat chips ─────────────────────────────────────────────────
             Row(
                 modifier              = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                StatChipSmall("Humidity",  "00%",       HumidityText, Modifier.weight(1f))
-                StatChipSmall("Wind",      "0.00 m/s",  WindText,     Modifier.weight(1f))
-                StatChipSmall("Pressure",  "000",       PressureText, Modifier.weight(1f))
+                StatChip(
+                    label      = "Humidity",
+                    labelColor = HumidityBackground,
+                    value      = "${info.current.humidity}%",
+                    valueColor = HumidityText,
+                    modifier   = Modifier.weight(1f)
+                )
+                StatChip(
+                    label      = "Wind",
+                    labelColor = WindBackground,
+                    value      = "${info.current.windSpeed} m/s",
+                    valueColor = WindText,
+                    modifier   = Modifier.weight(1f)
+                )
+                StatChip(
+                    label      = "Feels like",
+                    labelColor = FeelsLikeBackground,
+                    value      = "${info.current.feelsLike.roundToInt()}°C",
+                    valueColor = PressureText,
+                    modifier   = Modifier.weight(1f)
+                )
             }
-        }
-    }
-}
-
-@Composable
-private fun StatChipSmall(
-    label      : String,
-    value      : String,
-    valueColor : Color,
-    modifier   : Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(10.dp))
-            .background(DarkSurfaceVariant)
-            .padding(horizontal = 10.dp, vertical = 10.dp)
-    ) {
-        Column {
-            Text(
-                text     = label,
-                fontSize = 11.sp,
-                color    = OnDarkSecondary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text       = value,
-                fontSize   = 15.sp,
-                fontWeight = FontWeight.SemiBold,
-                color      = valueColor,
-                maxLines   = 1,
-                overflow   = TextOverflow.Ellipsis
-            )
         }
     }
 }
@@ -250,17 +305,24 @@ private fun StatChipSmall(
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
-fun CameraCard(modifier: Modifier = Modifier) {
-    Surface(
-        modifier       = modifier.fillMaxWidth(),
-        shape          = RoundedCornerShape(14.dp),
-        color          = DarkSurface,
+fun CameraCard(
+    imageResult : CompressedImageResult?,
+    onOpenCamera: () -> Unit,
+    modifier    : Modifier = Modifier
+) {
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 12.dp, vertical = 3.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
     ) {
         Column(
             modifier = Modifier.padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Photo preview area
+
+            // ── Photo preview / placeholder ───────────────────────────────
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -278,32 +340,89 @@ fun CameraCard(modifier: Modifier = Modifier) {
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text  = "Photo preview",
-                    color = OnDarkPrimary.copy(alpha = 0.6f),
-                    style = MaterialTheme.typography.bodyLarge
-                )
+                if (imageResult != null) {
+                    // Show captured & compressed image
+                    AsyncImage(
+                        model             = imageResult.uri,
+                        contentDescription = "Captured photo",
+                        contentScale      = ContentScale.Crop,
+                        modifier          = Modifier.fillMaxSize()
+                    )
+                } else {
+                    Text(
+                        text  = "Photo preview",
+                        color = OnDarkPrimary.copy(alpha = 0.6f),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
             }
 
-            // Capture Photo button
+            // ── Size info row (shown only after capture) ──────────────────
+            if (imageResult != null) {
+                Row(
+                    modifier              = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    SizeChip(
+                        label    = "Original",
+                        value    = ImageUtils.formatBytes(imageResult.originalSizeBytes),
+                        modifier = Modifier.weight(1f)
+                    )
+                    SizeChip(
+                        label    = "Compressed",
+                        value    = ImageUtils.formatBytes(imageResult.compressedSizeBytes),
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+
+            // ── Capture button ────────────────────────────────────────────
             Button(
-                onClick = { /* TODO */ },
+                onClick  = onOpenCamera,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
                 shape  = RoundedCornerShape(28.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = ButtonFill,
+                    containerColor = ButtonFill_lighttype,
                     contentColor   = Color(0xFF1A2710)
                 )
             ) {
                 Text(
-                    text       = "Capture Photo",
+                    text       = if (imageResult != null) "Retake Photo" else "Capture Photo",
                     fontWeight = FontWeight.SemiBold,
                     fontSize   = 14.sp
                 )
             }
         }
+    }
+}
+
+// ── Small chip to display file size ──────────────────────────────────────────
+@Composable
+private fun SizeChip(
+    label   : String,
+    value   : String,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text     = label,
+            fontSize = 10.sp,
+            color    = OnDarkSecondary
+        )
+        Text(
+            text       = value,
+            fontSize   = 13.sp,
+            fontWeight = FontWeight.SemiBold,
+            color      = OnDarkPrimary
+        )
     }
 }
 
@@ -317,39 +436,52 @@ fun FieldNotesCard(
     onNotesChange: (String) -> Unit,
     modifier     : Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 12.dp, vertical = 3.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
     ) {
-        Text(
-            text       = "Field Notes",
-            style      = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color      = OnDarkPrimary
-        )
-
-        OutlinedTextField(
-            value         = notes,
-            onValueChange = onNotesChange,
-            modifier      = Modifier
-                .fillMaxWidth()
-                .height(140.dp),
-            placeholder   = {
-                Text(
-                    text  = "Notes",
-                    color = OnDarkDisabled
-                )
-            },
-            shape  = RoundedCornerShape(10.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor        = OnDarkPrimary,
-                unfocusedTextColor      = OnDarkPrimary,
-                focusedBorderColor      = OliveGreen80,
-                unfocusedBorderColor    = OnDarkDisabled,
-                cursorColor             = OliveGreen80,
-                focusedContainerColor   = DarkSurface,
-                unfocusedContainerColor = DarkSurface,
+        Spacer(Modifier.height(6.dp))
+        Column(
+            modifier = modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Text(
+                text       = "Field Notes",
+                style      = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color      = OnDarkPrimary
             )
-        )
+
+            OutlinedTextField(
+                value         = notes,
+                onValueChange = onNotesChange,
+                modifier      = Modifier
+                    .fillMaxWidth()
+                    .height(140.dp),
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Sentences
+                ),
+                placeholder   = {
+                    Text(
+                        text  = "Notes",
+                        color = OnDarkDisabled
+                    )
+                },
+                shape  = RoundedCornerShape(10.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor        = OnDarkPrimary,
+                    unfocusedTextColor      = OnDarkPrimary,
+                    focusedBorderColor      = OliveGreen80,
+                    unfocusedBorderColor    = OnDarkDisabled,
+                    cursorColor             = OliveGreen80,
+                    focusedContainerColor   = MaterialTheme.colorScheme.surfaceVariant,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                )
+            )
+        }
+        Spacer(Modifier.height(6.dp))
     }
 }

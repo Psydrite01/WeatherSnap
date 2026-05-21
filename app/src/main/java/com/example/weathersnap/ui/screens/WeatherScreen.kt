@@ -16,6 +16,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
@@ -29,6 +30,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -60,7 +62,7 @@ private val FeelsLikeBackground = Color(0xff403a2a)
 
 @Composable
 fun WeatherScreen(
-    viewModel: WeatherViewModel = hiltViewModel(),
+    viewModel: WeatherViewModel,
     navigateToCreateReport: () -> Unit,
 ) {
     val weatherState by viewModel.weatherState.collectAsState()
@@ -95,7 +97,8 @@ fun WeatherScreen(
             WeatherDataCard(
                 modifier       = Modifier.padding(horizontal = 12.dp),
                 weatherState   = weatherState,
-                navigateToCreateReport = navigateToCreateReport
+                navigateToCreateReport = navigateToCreateReport,
+                viewModel
             )
 
             Spacer(Modifier.height(16.dp))
@@ -210,6 +213,9 @@ fun CitySearchCard(
                     label         = { Text("City", color = OnDarkSecondary, fontSize = 12.sp) },
                     singleLine    = true,
                     shape         = RoundedCornerShape(8.dp),
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.Words
+                    ),
                     trailingIcon  = {
                         // Show spinner while fetching suggestions
                         if (searchState.isSearching) {
@@ -347,7 +353,8 @@ fun CitySearchCard(
 fun WeatherDataCard(
     modifier               : Modifier = Modifier,
     weatherState           : WeatherUiState,
-    navigateToCreateReport : () -> Unit
+    navigateToCreateReport : () -> Unit,
+    viewModel: WeatherViewModel
 ) {
     Surface(
         modifier       = modifier.fillMaxWidth(),
@@ -393,7 +400,8 @@ fun WeatherDataCard(
                 is WeatherUiState.Success -> {
                     WeatherCardContent(
                         info                   = state.weatherInfo,
-                        navigateToCreateReport = navigateToCreateReport
+                        navigateToCreateReport = navigateToCreateReport,
+                        viewModel,
                     )
                 }
 
@@ -453,7 +461,8 @@ private fun WeatherCardPlaceholder(navigateToCreateReport: () -> Unit) {
 @Composable
 private fun WeatherCardContent(
     info                   : WeatherInfo,
-    navigateToCreateReport : () -> Unit
+    navigateToCreateReport : () -> Unit,
+    viewModel: WeatherViewModel
 ) {
     Column(modifier = Modifier.padding(16.dp)) {
 
@@ -567,7 +576,10 @@ private fun WeatherCardContent(
 
         // ── Create Report button ────────────────────────────────────────
         Button(
-            onClick  = navigateToCreateReport,
+            onClick  = {
+                viewModel.setSelectedWeather(info)
+                navigateToCreateReport()
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp),
