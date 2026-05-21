@@ -17,7 +17,7 @@ val OliveGreen80        = Color(0xFFB5CC6A)   // primary – lime/olive highligh
 val OliveGreenGrey80    = Color(0xFF8A9E5C)   // secondary
 val MossGreen80         = Color(0xFF6B8C52)   // tertiary
 
-val OliveGreen40        = Color(0xFF4A6320)
+val OliveGreen40        = Color(0xFF424b07)
 val OliveGreenGrey40    = Color(0xFF3D5218)
 val MossGreen40         = Color(0xFF2E4010)
 

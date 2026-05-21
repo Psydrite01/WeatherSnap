@@ -1,13 +1,19 @@
 package com.example.weathersnap.di
 
+import android.content.Context
+import androidx.room.Room
 import com.example.weathersnap.data.GeocodingApiService
 import com.example.weathersnap.data.WeatherApiService
+import com.example.weathersnap.data.local.CityDao
+import com.example.weathersnap.data.local.WeatherDatabase
 import com.example.weathersnap.data.repository.WeatherRepository
 import com.example.weathersnap.data.repository.WeatherRepositoryImpl
+import com.google.gson.Gson
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Named
 import javax.inject.Singleton
@@ -65,6 +71,21 @@ object NetworkModule {
     fun provideWeatherApiService(
         @Named("weather") retrofit: Retrofit
     ): WeatherApiService = retrofit.create(WeatherApiService::class.java)
+
+    @Provides
+    @Singleton
+    fun provideWeatherDatabase(@ApplicationContext context: Context): WeatherDatabase =
+        Room.databaseBuilder(context, WeatherDatabase::class.java, "weather_db")
+            .fallbackToDestructiveMigration()
+            .build()
+
+    @Provides
+    @Singleton
+    fun provideCityDao(db: WeatherDatabase): CityDao = db.cityDao()
+
+    @Provides
+    @Singleton
+    fun provideGson(): Gson = Gson()
 }
 
 @Module

@@ -1,5 +1,6 @@
 package com.example.weathersnap.ui.screens
 
+import android.R
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -11,7 +12,6 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -25,14 +25,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -46,15 +44,19 @@ import com.example.weathersnap.ui.theme.OnDarkDisabled
 import com.example.weathersnap.ui.theme.OnDarkPrimary
 import com.example.weathersnap.ui.theme.OnDarkSecondary
 import com.example.weathersnap.ui.theme.PressureText
-import com.example.weathersnap.ui.theme.TopGradientEnd
-import com.example.weathersnap.ui.theme.TopGradientStart
 import com.example.weathersnap.ui.theme.WindText
 import com.example.weathersnap.ui.viewmodel.SearchUiState
 import com.example.weathersnap.ui.viewmodel.WeatherUiState
 import com.example.weathersnap.ui.viewmodel.WeatherViewModel
 import kotlin.math.roundToInt
 
-private val ButtonFill = Color(0xFFCCDE6E)
+private val ButtonFill_lighttype = Color(0xFFCCDE6E)
+private val ButtonFill_darktype = Color(0xFF2d3400)
+
+private val HumidityBackground = Color(0xff353e35)
+private val WindBackground = Color(0xff353c3c)
+private val FeelsLikeBackground = Color(0xff403a2a)
+
 
 @Composable
 fun WeatherScreen(
@@ -107,48 +109,68 @@ fun WeatherScreen(
 
 @Composable
 fun WeatherSnapHeader() {
+    Spacer(Modifier.height(30.dp))
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(
-                brush = Brush.linearGradient(
-                    colors = listOf(TopGradientStart, TopGradientEnd),
-                    start  = Offset(0f, 0f),
-                    end    = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
-                )
-            )
-            .padding(horizontal = 20.dp, vertical = 22.dp)
     ) {
-        Column(modifier = Modifier.align(Alignment.CenterStart)) {
-            Text(
-                text       = "WeatherSnap",
-                style      = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color      = OnDarkPrimary
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp, bottom = 8.dp, start = 12.dp, end = 12.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.Transparent,
+                contentColor = MaterialTheme.colorScheme.onSurface
             )
-            Text(
-                text  = "Live weather reports with camera evidence",
-                style = MaterialTheme.typography.bodySmall,
-                color = OnDarkPrimary.copy(alpha = 0.78f)
-            )
+        ) {
+            Box(
+                modifier = Modifier.background(
+                    brush = Brush.horizontalGradient(
+                        colors = listOf(
+                            Color(0xffc1cd7e),
+                            Color(0xffa2d0c3)
+                        )
+                    )
+                )
+            ) {
+            Row() {
+                Column(modifier = Modifier
+                    .padding(16.dp)) {
+                    Text(
+                        text       = "WeatherSnap",
+                        fontSize   = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        color      = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text  = "Live weather reports with camera evidence",
+                        fontSize   = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+                Spacer(Modifier.weight(1f))
+                Button(
+                    onClick = { /* TODO */ },
+                    modifier = Modifier
+                        .padding(top = 16.dp, start = 8.dp, end = 16.dp, bottom = 16.dp),
+                    shape  = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ButtonFill_darktype,
+                        contentColor   = MaterialTheme.colorScheme.onSurface
+                    ),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Text(
+                        text       = "Reports",
+                        fontWeight = FontWeight.SemiBold,
+                        color = ButtonFill_lighttype,
+                        fontSize   = 13.sp
+                    )
+                }
+            }
+            }
         }
 
-        Button(
-            onClick = { /* TODO */ },
-            modifier = Modifier.align(Alignment.CenterEnd),
-            shape  = RoundedCornerShape(8.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = OliveGreen40,
-                contentColor   = OnDarkPrimary
-            ),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-        ) {
-            Text(
-                text       = "Reports",
-                fontWeight = FontWeight.SemiBold,
-                fontSize   = 13.sp
-            )
-        }
     }
 }
 
@@ -171,8 +193,7 @@ fun CitySearchCard(
     Surface(
         modifier       = modifier.fillMaxWidth(),
         shape          = RoundedCornerShape(12.dp),
-        color          = MaterialTheme.colorScheme.surface,
-        tonalElevation = 2.dp
+        color          = MaterialTheme.colorScheme.surface
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
 
@@ -218,8 +239,8 @@ fun CitySearchCard(
                         cursorColor             = OliveGreen80,
                         focusedLabelColor       = OliveGreen80,
                         unfocusedLabelColor     = OnDarkSecondary,
-                        focusedContainerColor   = DarkSurfaceVariant,
-                        unfocusedContainerColor = DarkSurfaceVariant,
+                        focusedContainerColor   = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
                     ),
                     textStyle = LocalTextStyle.current.copy(fontSize = 15.sp)
                 )
@@ -229,9 +250,9 @@ fun CitySearchCard(
                         onSearchClick()
                         focusManager.clearFocus()
                     },
-                    shape  = RoundedCornerShape(10.dp),
+                    shape  = RoundedCornerShape(50),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = ButtonFill,
+                        containerColor = ButtonFill_lighttype,
                         contentColor   = Color(0xFF1A2710)
                     ),
                     contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp)
@@ -331,8 +352,7 @@ fun WeatherDataCard(
     Surface(
         modifier       = modifier.fillMaxWidth(),
         shape          = RoundedCornerShape(14.dp),
-        color          = MaterialTheme.colorScheme.surface,
-        tonalElevation = 2.dp
+        color          = MaterialTheme.colorScheme.surfaceVariant,
     ) {
         // Animate between states cleanly
         AnimatedContent(
@@ -413,77 +433,15 @@ private fun WeatherCardPlaceholder(navigateToCreateReport: () -> Unit) {
     Column(modifier = Modifier.padding(16.dp)) {
 
         Row(
-            modifier              = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment     = Alignment.Top
+            verticalAlignment = Alignment.Top
         ) {
-            Column {
-                Text(
-                    text       = "Placeholder City",
-                    style      = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color      = OnDarkPrimary
-                )
-                Text(
-                    text  = "Search a city above",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = OnDarkSecondary
-                )
-            }
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(OliveGreen40)
-                    .padding(horizontal = 14.dp, vertical = 10.dp)
-            ) {
-                Text(
-                    text       = "--°C",
-                    fontSize   = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    color      = ButtonFill
-                )
-            }
-        }
-
-        Spacer(Modifier.height(16.dp))
-
-        Row(
-            modifier              = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            StatChip(label = "Humidity",  value = "--%",     valueColor = HumidityText, modifier = Modifier.weight(1f))
-            StatChip(label = "Wind",      value = "-- m/s",  valueColor = WindText,     modifier = Modifier.weight(1f))
-            StatChip(label = "Pressure",  value = "---",     valueColor = PressureText, modifier = Modifier.weight(1f))
-        }
-
-        Spacer(Modifier.height(12.dp))
-
-        Row(
-            modifier              = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment     = Alignment.CenterVertically
-        ) {
-            Text(text = "Report readiness", style = MaterialTheme.typography.bodyMedium, color = OnDarkSecondary)
             Text(
-                text       = "Camera and Room DB enabled",
-                style      = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                color      = OnDarkPrimary
+                text  = "Search a city above",
+                style = MaterialTheme.typography.bodyMedium,
+                color = OnDarkSecondary
             )
-        }
-
-        Spacer(Modifier.height(16.dp))
-
-        Button(
-            onClick  = navigateToCreateReport,
-            modifier = Modifier.fillMaxWidth().height(52.dp),
-            shape    = RoundedCornerShape(14.dp),
-            colors   = ButtonDefaults.buttonColors(
-                containerColor = ButtonFill,
-                contentColor   = Color(0xFF1A2710)
-            )
-        ) {
-            Text(text = "Create Report", fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
         }
     }
 }
@@ -540,7 +498,7 @@ private fun WeatherCardContent(
                     text       = "${info.current.temperature.roundToInt()}°C",
                     fontSize   = 22.sp,
                     fontWeight = FontWeight.Bold,
-                    color      = ButtonFill
+                    color      = ButtonFill_lighttype
                 )
             }
         }
@@ -554,18 +512,21 @@ private fun WeatherCardContent(
         ) {
             StatChip(
                 label      = "Humidity",
+                labelColor = HumidityBackground,
                 value      = "${info.current.humidity}%",
                 valueColor = HumidityText,
                 modifier   = Modifier.weight(1f)
             )
             StatChip(
                 label      = "Wind",
+                labelColor = WindBackground,
                 value      = "${info.current.windSpeed} m/s",
                 valueColor = WindText,
                 modifier   = Modifier.weight(1f)
             )
             StatChip(
                 label      = "Feels like",
+                labelColor = FeelsLikeBackground,
                 value      = "${info.current.feelsLike.roundToInt()}°C",
                 valueColor = PressureText,
                 modifier   = Modifier.weight(1f)
@@ -575,22 +536,31 @@ private fun WeatherCardContent(
         Spacer(Modifier.height(12.dp))
 
         // ── Report readiness ────────────────────────────────────────────
-        Row(
-            modifier              = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment     = Alignment.CenterVertically
+        Card(
+            modifier = Modifier,
+            colors = CardDefaults.cardColors(
+                containerColor = Color(0xff424338)
+            )
         ) {
-            Text(
-                text  = "Report readiness",
-                style = MaterialTheme.typography.bodyMedium,
-                color = OnDarkSecondary
-            )
-            Text(
-                text       = "Camera and Room DB enabled",
-                style      = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                color      = OnDarkPrimary
-            )
+            Row(
+                modifier              = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment     = Alignment.CenterVertically
+            ) {
+                Text(
+                    text  = "Report readiness",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = OnDarkSecondary
+                )
+                Text(
+                    text       = "Camera and Room DB enabled",
+                    style      = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color      = OnDarkPrimary
+                )
+            }
         }
 
         Spacer(Modifier.height(16.dp))
@@ -603,7 +573,7 @@ private fun WeatherCardContent(
                 .height(52.dp),
             shape    = RoundedCornerShape(14.dp),
             colors   = ButtonDefaults.buttonColors(
-                containerColor = ButtonFill,
+                containerColor = ButtonFill_lighttype,
                 contentColor   = Color(0xFF1A2710)
             )
         ) {
@@ -617,12 +587,13 @@ private fun WeatherCardContent(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  Stat chip   (unchanged from your original)
+//  Stat chip
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
 fun StatChip(
     label      : String,
+    labelColor:Color,
     value      : String,
     valueColor : Color,
     modifier   : Modifier = Modifier
@@ -630,7 +601,7 @@ fun StatChip(
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(10.dp))
-            .background(DarkSurfaceVariant)
+            .background(labelColor)
             .padding(horizontal = 10.dp, vertical = 10.dp)
     ) {
         Column {

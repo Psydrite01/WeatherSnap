@@ -28,12 +28,12 @@ private val DarkColorScheme = darkColorScheme(
     tertiaryContainer = MossGreen40,
     onTertiaryContainer = MossGreen80,
 
-    background  = DarkBackground,
+    background  = Color(0xff22250b),
     onBackground = OnDarkPrimary,
 
-    surface         = DarkSurface,
-    onSurface       = OnDarkPrimary,
-    surfaceVariant  = DarkSurfaceVariant,
+    surface         = Color(0xff13140c),
+    onSurface       = Color(0xff2e3501),
+    surfaceVariant  = Color(0xff35352d),
     onSurfaceVariant = OnDarkSecondary,
 
     outline = OnDarkDisabled
@@ -59,7 +59,7 @@ private val LightColorScheme = lightColorScheme(
 fun WeatherSnapTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
 //    val colorScheme = when {

@@ -165,7 +165,6 @@ fun WeatherSummaryCard(modifier: Modifier = Modifier) {
         modifier       = modifier.fillMaxWidth(),
         shape          = RoundedCornerShape(14.dp),
         color          = DarkSurface,
-        tonalElevation = 2.dp
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
 
@@ -256,7 +255,6 @@ fun CameraCard(modifier: Modifier = Modifier) {
         modifier       = modifier.fillMaxWidth(),
         shape          = RoundedCornerShape(14.dp),
         color          = DarkSurface,
-        tonalElevation = 2.dp
     ) {
         Column(
             modifier = Modifier.padding(12.dp),

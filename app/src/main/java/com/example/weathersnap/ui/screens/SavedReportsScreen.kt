@@ -136,7 +136,6 @@ fun ReportCard(report: SavedReport) {
         modifier       = Modifier.fillMaxWidth(),
         shape          = RoundedCornerShape(14.dp),
         color          = DarkSurface,
-        tonalElevation = 2.dp
     ) {
         Column {
 
